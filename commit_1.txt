@@ -1,0 +1,83 @@
+
+
+PRIMER COMMIT
+
+
+CREATE TABLE IF NOT EXISTS tipo_producto (
+    id_tip_producto SERIAL PRIMARY KEY,
+    tipo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_tipo_producto_tipo ON tipo_producto(tipo);
+
+
+CREATE TABLE IF NOT EXISTS producto (
+    id_producto SERIAL PRIMARY KEY,
+    cod_producto VARCHAR(50) NOT NULL,
+    id_tip_producto INTEGER NOT NULL,
+    valor_uni NUMERIC(12,2) NOT NULL CHECK (valor_uni >= 0),
+    costo NUMERIC(12,2) NOT NULL CHECK (costo >= 0),
+    cantidad_llego INTEGER DEFAULT 0 CHECK (cantidad_llego >= 0),
+    cantidad_actual INTEGER DEFAULT 0 CHECK (cantidad_actual >= 0),
+    descripcion TEXT,
+    img TEXT,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    CONSTRAINT fk_producto_tipo FOREIGN KEY (id_tip_producto)
+        REFERENCES tipo_producto (id_tip_producto)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_producto_cod_producto ON producto(cod_producto);
+CREATE INDEX IF NOT EXISTS ix_producto_id_tip_producto ON producto(id_tip_producto);
+
+
+CREATE TABLE IF NOT EXISTS tienda (
+    id_tienda SERIAL PRIMARY KEY,
+    nombre_tienda VARCHAR(150) NOT NULL,
+    id_departamento INTEGER,
+    direccion TEXT,
+    id_bodega INTEGER,
+    telefono VARCHAR(30),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ix_tienda_id_departamento ON tienda(id_departamento);
+CREATE INDEX IF NOT EXISTS ix_tienda_nombre ON tienda(nombre_tienda);
+
+
+
+CREATE OR REPLACE FUNCTION fn_update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.fecha_actualizacion = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DROP TRIGGER IF EXISTS trg_tipo_producto_update ON tipo_producto;
+CREATE TRIGGER trg_tipo_producto_update
+BEFORE UPDATE ON tipo_producto
+FOR EACH ROW
+EXECUTE PROCEDURE fn_update_timestamp();
+
+
+DROP TRIGGER IF EXISTS trg_producto_update ON producto;
+CREATE TRIGGER trg_producto_update
+BEFORE UPDATE ON producto
+FOR EACH ROW
+EXECUTE PROCEDURE fn_update_timestamp();
+
+
+DROP TRIGGER IF EXISTS trg_tienda_update ON tienda;
+CREATE TRIGGER trg_tienda_update
+BEFORE UPDATE ON tienda
+FOR EACH ROW
+EXECUTE PROCEDURE fn_update_timestamp();
+
