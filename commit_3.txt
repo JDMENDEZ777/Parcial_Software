@@ -1,0 +1,26 @@
+
+TERCER COMMIT
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_departamento_nombre ON departamento(departamento);
+CREATE INDEX IF NOT EXISTS ix_municipio_id_departamento ON municipio(id_departamento);
+CREATE INDEX IF NOT EXISTS ix_bodega_id_departamento ON bodega(id_departamento);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_perfil_tipo ON perfil(tipo_perfil);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_usuario_login ON usuario(usuario_login);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_n_documento ON cliente(n_documento);
+CREATE INDEX IF NOT EXISTS ix_cliente_id_municipio ON cliente(id_municipio);
+CREATE INDEX IF NOT EXISTS ix_cliente_id_departamento ON cliente(id_departamento);
+CREATE INDEX IF NOT EXISTS ix_perfil_usuario_id_usuario ON perfil_usuario(id_usuario);
+CREATE INDEX IF NOT EXISTS ix_perfil_usuario_id_perfil ON perfil_usuario(id_perfil);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_tienda_actual ON traslado(id_tienda_actual);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_tienda_nueva ON traslado(id_tienda_nueva);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_producto ON traslado(id_producto);
+CREATE INDEX IF NOT EXISTS ix_traslado_fecha ON traslado(fecha_traslado);
+CREATE INDEX IF NOT EXISTS ix_devolucion_id_producto ON devolucion(id_producto);
+CREATE INDEX IF NOT EXISTS ix_devolucion_fecha ON devolucion(fecha_devolucion);
+CREATE INDEX IF NOT EXISTS ix_tienda_producto_id_producto ON tienda_producto(id_producto);
+CREATE INDEX IF NOT EXISTS ix_tienda_producto_id_tienda ON tienda_producto(id_tienda);
+CREATE INDEX IF NOT EXISTS ix_factura_fecha_inicio ON factura_venta(fecha_inicio);
+CREATE INDEX IF NOT EXISTS ix_factura_id_cliente ON factura_venta(id_cliente);
+CREATE INDEX IF NOT EXISTS ix_factura_id_tienda ON factura_venta(id_tienda);
+CREATE INDEX IF NOT EXISTS ix_ventas_id_factura ON ventas(id_factura);
+CREATE INDEX IF NOT EXISTS ix_ventas_id_producto ON ventas(id_producto);
