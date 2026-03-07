@@ -1,0 +1,159 @@
+
+SEGUNDO COMMIT
+
+CREATE TABLE IF NOT EXISTS departamento (
+    id_departamento SERIAL PRIMARY KEY,
+    departamento VARCHAR(150) NOT NULL,
+    codigo VARCHAR(20),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS municipio (
+    id_municipio SERIAL PRIMARY KEY,
+    municipio VARCHAR(150) NOT NULL,
+    id_departamento INTEGER,
+    codigo VARCHAR(20),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bodega (
+    id_bodega SERIAL PRIMARY KEY,
+    nombre_bodega VARCHAR(150),
+    telefono VARCHAR(30),
+    direccion TEXT,
+    id_departamento INTEGER,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS perfil (
+    id_perfil SERIAL PRIMARY KEY,
+    tipo_perfil VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS usuario (
+    id_usu SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100),
+    usuario_login VARCHAR(100) NOT NULL,
+    psw VARCHAR(200) NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    id_tienda INTEGER,
+    activo BOOLEAN DEFAULT TRUE,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS cliente (
+    id_cliente SERIAL PRIMARY KEY,
+    nombres VARCHAR(200) NOT NULL,
+    n_documento VARCHAR(50) NOT NULL,
+    email VARCHAR(200),
+    telefono VARCHAR(30),
+    direccion TEXT,
+    id_departamento INTEGER,
+    id_municipio INTEGER,
+    id_usuario INTEGER,
+    fecha_nacimiento DATE,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS perfil_usuario (
+    id_tip_perfil SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_perfil INTEGER NOT NULL,
+    fecha_asignacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS traslado (
+    id_traslado SERIAL PRIMARY KEY,
+    id_tienda_actual INTEGER,
+    id_tienda_nueva INTEGER,
+    id_producto INTEGER,
+    cantidad INTEGER DEFAULT 0 CHECK (cantidad >= 0),
+    fecha_traslado TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    id_usuario INTEGER,
+    observaciones TEXT,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS devolucion (
+    id_devolucion SERIAL PRIMARY KEY,
+    id_producto INTEGER,
+    id_venta INTEGER,
+    id_factura INTEGER,
+    cantidad INTEGER DEFAULT 1 CHECK (cantidad > 0),
+    motivo TEXT,
+    fecha_devolucion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    id_usuario INTEGER,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS tienda_producto (
+    id_tienda_producto SERIAL PRIMARY KEY,
+    id_producto INTEGER,
+    id_tienda INTEGER,
+    cantidad INTEGER DEFAULT 0 CHECK (cantidad >= 0),
+    saldo NUMERIC(14,2) DEFAULT 0 CHECK (saldo >= 0),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS factura_venta (
+    id_factura_venta SERIAL PRIMARY KEY,
+    fecha_inicio TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    fecha_fin TIMESTAMP WITHOUT TIME ZONE,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    id_cliente INTEGER,
+    id_usuario INTEGER,
+    id_tienda INTEGER,
+    total NUMERIC(14,2) DEFAULT 0 CHECK (total >= 0),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS ventas (
+    id_ventas SERIAL PRIMARY KEY,
+    id_factura INTEGER,
+    id_producto INTEGER,
+    cantidad INTEGER DEFAULT 1 CHECK (cantidad > 0),
+    precio_unitario NUMERIC(12,2) DEFAULT 0 CHECK (precio_unitario >= 0),
+    tipo_descuento VARCHAR(50),
+    valor_descuento NUMERIC(12,2) DEFAULT 0 CHECK (valor_descuento >= 0),
+    total_linea NUMERIC(14,2) DEFAULT 0 CHECK (total_linea >= 0),
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    fecha_actualizacion TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_departamento_nombre ON departamento(departamento);
+CREATE INDEX IF NOT EXISTS ix_municipio_id_departamento ON municipio(id_departamento);
+CREATE INDEX IF NOT EXISTS ix_bodega_id_departamento ON bodega(id_departamento);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_perfil_tipo ON perfil(tipo_perfil);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_usuario_login ON usuario(usuario_login);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_n_documento ON cliente(n_documento);
+CREATE INDEX IF NOT EXISTS ix_cliente_id_municipio ON cliente(id_municipio);
+CREATE INDEX IF NOT EXISTS ix_cliente_id_departamento ON cliente(id_departamento);
+CREATE INDEX IF NOT EXISTS ix_perfil_usuario_id_usuario ON perfil_usuario(id_usuario);
+CREATE INDEX IF NOT EXISTS ix_perfil_usuario_id_perfil ON perfil_usuario(id_perfil);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_tienda_actual ON traslado(id_tienda_actual);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_tienda_nueva ON traslado(id_tienda_nueva);
+CREATE INDEX IF NOT EXISTS ix_traslado_id_producto ON traslado(id_producto);
+CREATE INDEX IF NOT EXISTS ix_traslado_fecha ON traslado(fecha_traslado);
+CREATE INDEX IF NOT EXISTS ix_devolucion_id_producto ON devolucion(id_producto);
+CREATE INDEX IF NOT EXISTS ix_devolucion_fecha ON devolucion(fecha_devolucion);
+CREATE INDEX IF NOT EXISTS ix_tienda_producto_id_producto ON tienda_producto(id_producto);
+CREATE INDEX IF NOT EXISTS ix_tienda_producto_id_tienda ON tienda_producto(id_tienda);
+CREATE INDEX IF NOT EXISTS ix_factura_fecha_inicio ON factura_venta(fecha_inicio);
+CREATE INDEX IF NOT EXISTS ix_factura_id_cliente ON factura_venta(id_cliente);
+CREATE INDEX IF NOT EXISTS ix_factura_id_tienda ON factura_venta(id_tienda);
+CREATE INDEX IF NOT EXISTS ix_ventas_id_factura ON ventas(id_factura);
+CREATE INDEX IF NOT EXISTS ix_ventas_id_producto ON ventas(id_producto);
