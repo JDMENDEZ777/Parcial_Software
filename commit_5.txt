@@ -1,0 +1,98 @@
+
+
+OPTIMIZACION - QUINTO COMMIT
+
+
+CREATE OR REPLACE FUNCTION fn_update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.fecha_actualizacion := now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_calc_total_linea()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.total_linea := GREATEST((COALESCE(NEW.precio_unitario,0) * COALESCE(NEW.cantidad,0)) - COALESCE(NEW.valor_descuento,0), 0);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_actualiza_total_factura_v2()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_id_factura INTEGER;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    v_id_factura := NEW.id_factura;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF OLD.id_factura IS DISTINCT FROM NEW.id_factura THEN
+      IF OLD.id_factura IS NOT NULL THEN
+        UPDATE factura_venta
+        SET total = COALESCE((SELECT SUM(total_linea) FROM ventas WHERE id_factura = OLD.id_factura),0),
+            fecha_actualizacion = now()
+        WHERE id_factura_venta = OLD.id_factura;
+      END IF;
+    END IF;
+    v_id_factura := NEW.id_factura;
+  ELSIF TG_OP = 'DELETE' THEN
+    v_id_factura := OLD.id_factura;
+  END IF;
+
+  IF v_id_factura IS NOT NULL THEN
+    UPDATE factura_venta
+    SET total = COALESCE((SELECT SUM(total_linea) FROM ventas WHERE id_factura = v_id_factura),0),
+        fecha_actualizacion = now()
+    WHERE id_factura_venta = v_id_factura;
+  END IF;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_calc_total_linea ON ventas;
+CREATE TRIGGER trg_calc_total_linea
+BEFORE INSERT OR UPDATE ON ventas
+FOR EACH ROW
+EXECUTE PROCEDURE fn_calc_total_linea();
+
+DROP TRIGGER IF EXISTS trg_update_factura_total ON ventas;
+CREATE TRIGGER trg_update_factura_total
+AFTER INSERT OR UPDATE OR DELETE ON ventas
+FOR EACH ROW
+EXECUTE PROCEDURE fn_actualiza_total_factura_v2();
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'tienda_producto') THEN
+    DROP TRIGGER IF EXISTS trg_tienda_producto_update ON tienda_producto;
+    CREATE TRIGGER trg_tienda_producto_update BEFORE UPDATE ON tienda_producto
+      FOR EACH ROW EXECUTE PROCEDURE fn_update_timestamp();
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'factura_venta') THEN
+    DROP TRIGGER IF EXISTS trg_factura_venta_update ON factura_venta;
+    CREATE TRIGGER trg_factura_venta_update BEFORE UPDATE ON factura_venta
+      FOR EACH ROW EXECUTE PROCEDURE fn_update_timestamp();
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'ventas') THEN
+    DROP TRIGGER IF EXISTS trg_ventas_update ON ventas;
+    CREATE TRIGGER trg_ventas_update BEFORE UPDATE ON ventas
+      FOR EACH ROW EXECUTE PROCEDURE fn_update_timestamp();
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'traslado') THEN
+    DROP TRIGGER IF EXISTS trg_traslado_update ON traslado;
+    CREATE TRIGGER trg_traslado_update BEFORE UPDATE ON traslado
+      FOR EACH ROW EXECUTE PROCEDURE fn_update_timestamp();
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'devolucion') THEN
+    DROP TRIGGER IF EXISTS trg_devolucion_update ON devolucion;
+    CREATE TRIGGER trg_devolucion_update BEFORE UPDATE ON devolucion
+      FOR EACH ROW EXECUTE PROCEDURE fn_update_timestamp();
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
