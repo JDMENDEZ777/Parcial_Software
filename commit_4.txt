@@ -1,0 +1,37 @@
+
+CUARTO COMMIT
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_producto_cod_producto ON producto(cod_producto);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_usuario_login ON usuario(usuario_login);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_n_documento ON cliente(n_documento);
+
+CREATE INDEX IF NOT EXISTS ix_factura_tienda_fecha ON factura_venta(id_tienda, fecha_inicio);
+CREATE INDEX IF NOT EXISTS ix_ventas_id_producto_id_factura ON ventas(id_producto, id_factura);
+CREATE INDEX IF NOT EXISTS ix_tienda_producto_tienda_producto ON tienda_producto(id_tienda, id_producto);
+CREATE INDEX IF NOT EXISTS ix_traslado_fecha ON traslado(fecha_traslado);
+
+ALTER TABLE ventas SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 50);
+ALTER TABLE tienda_producto SET (autovacuum_vacuum_scale_factor = 0.02, autovacuum_vacuum_threshold = 50);
+
+DROP MATERIALIZED VIEW IF EXISTS mv_stock_por_tienda;
+CREATE MATERIALIZED VIEW mv_stock_por_tienda AS
+SELECT tp.id_tienda,
+       t.nombre_tienda,
+       p.id_producto,
+       p.cod_producto,
+       p.descripcion,
+       tp.cantidad,
+       tp.saldo,
+       tp.fecha_actualizacion
+FROM tienda_producto tp
+JOIN tienda t ON t.id_tienda = tp.id_tienda
+JOIN producto p ON p.id_producto = tp.id_producto;
+
+CREATE INDEX IF NOT EXISTS ix_mv_stock_tienda_producto ON mv_stock_por_tienda(id_tienda, id_producto);
+
+
+COMANDO PARA ACTUALIZAR:
+
+REFRESH MATERIALIZED VIEW mv_stock_por_tienda;
